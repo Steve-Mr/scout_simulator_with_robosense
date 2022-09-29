@@ -1,6 +1,6 @@
 [submodule "ugv_sim"]
 	path = ugv_sim
-	url = https://github.com/Steve-Mr/ugv_gazebo_sim.git
+	url = https://github.com/Steve-Mr/ugv_sim.git
 [submodule "robosense_simulator"]
 	path = robosense_simulator
 	url = https://github.com/Steve-Mr/robosense_simulator.git
