@@ -1,0 +1,9 @@
+[submodule "ugv_sim"]
+	path = ugv_sim
+	url = https://github.com/agilexrobotics/ugv_gazebo_sim.git
+[submodule "robosense_simulator"]
+	path = robosense_simulator
+	url = https://github.com/tomlogan501/robosense_simulator.git
+[submodule "pointcloud_to_laserscan"]
+	path = pointcloud_to_laserscan
+	url = https://github.com/ros-perception/pointcloud_to_laserscan.git

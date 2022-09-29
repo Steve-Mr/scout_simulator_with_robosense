@@ -1,0 +1,17 @@
+digraph G {
+"base_link" -> "inertial_link"[label="Broadcaster: /robot_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 26.948 sec old)\nBuffer length: 0.000 sec\n"];
+"base_footprint" -> "base_link"[label="Broadcaster: /gazebo\nAverage rate: 119.145 Hz\nMost recent transform: 26.964 ( -0.016 sec old)\nBuffer length: 1.964 sec\n"];
+"base_link" -> "robosense_base_link"[label="Broadcaster: /robot_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 26.948 sec old)\nBuffer length: 0.000 sec\n"];
+"robosense_base_link" -> "robosense"[label="Broadcaster: /robot_state_publisher\nAverage rate: 10000.000 Hz\nMost recent transform: 0.000 ( 26.948 sec old)\nBuffer length: 0.000 sec\n"];
+"map" -> "odom"[label="Broadcaster: /amcl\nAverage rate: 3.741 Hz\nMost recent transform: 26.800 ( 0.148 sec old)\nBuffer length: 0.802 sec\n"];
+"world" -> "map"[label="Broadcaster: /world_to_map\nAverage rate: 20.323 Hz\nMost recent transform: 26.972 ( -0.024 sec old)\nBuffer length: 1.919 sec\n"];
+"odom" -> "base_footprint"[label="Broadcaster: /robot_pose_ekf\nAverage rate: 30.890 Hz\nMost recent transform: 26.910 ( 0.038 sec old)\nBuffer length: 1.910 sec\n"];
+"base_link" -> "front_left_wheel_link"[label="Broadcaster: /robot_state_publisher\nAverage rate: 25.532 Hz\nMost recent transform: 26.920 ( 0.028 sec old)\nBuffer length: 1.880 sec\n"];
+"base_link" -> "front_right_wheel_link"[label="Broadcaster: /robot_state_publisher\nAverage rate: 25.532 Hz\nMost recent transform: 26.920 ( 0.028 sec old)\nBuffer length: 1.880 sec\n"];
+"base_link" -> "rear_left_wheel_link"[label="Broadcaster: /robot_state_publisher\nAverage rate: 25.532 Hz\nMost recent transform: 26.920 ( 0.028 sec old)\nBuffer length: 1.880 sec\n"];
+"base_link" -> "rear_right_wheel_link"[label="Broadcaster: /robot_state_publisher\nAverage rate: 25.532 Hz\nMost recent transform: 26.920 ( 0.028 sec old)\nBuffer length: 1.880 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 26.948"[ shape=plaintext ] ;
+ }->"world";
+}

@@ -1,0 +1,11 @@
+<launch>
+	<arg name="map" default="map.yaml" />
+	
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find navigation)/map/$(arg map)" />
+
+	<include file="$(find navigation)/launch/amcl.launch" />
+
+	<node pkg="rviz" type="rviz" name="rviz"/>
+</launch>
+
+
