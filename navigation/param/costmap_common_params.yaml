@@ -5,7 +5,7 @@ obstacle_range: 2.5
 raytrace_range: 3.0
 
 # Footprint of the robot with (0,0) being the center (in meters)
-footprint: [[-1.25, -0.66], [-1.25, 0.66], [1.25, 0.66], [1.25, -0.66]]
+footprint: [[-0.55, -0.40], [-0.55, 0.40], [0.55, 0.40], [0.55, -0.40]]
 
 # The static map created using SLAM is being published to this topic
 map_topic: /map
