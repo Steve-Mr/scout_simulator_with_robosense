@@ -8,3 +8,6 @@
 	path = pointcloud_to_laserscan
 	url = https://github.com/Steve-Mr/pointcloud_to_laserscan.git
 	branch = lunar-devel
+[submodule "apiserver/scripts"]
+	path = apiserver/scripts
+	url = https://github.com/Steve-Mr/ros_nodejs_backend.git
