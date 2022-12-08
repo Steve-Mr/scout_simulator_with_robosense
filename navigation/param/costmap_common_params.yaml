@@ -17,7 +17,7 @@ global_frame: map
 robot_base_frame: base_link
 
 # Frequency in Hz for the costmap to be updated
-update_frequency: 2.0
+update_frequency: 5.0
 
 # Frequency in Hz for the costmap to publish display information
 publish_frequency: 5.0

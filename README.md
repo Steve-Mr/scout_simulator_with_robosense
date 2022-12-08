@@ -22,4 +22,7 @@ roslaunch pointcloud_to_laserscan point_to_scan.launch
 
 # launch navigation related nodes
 roslaunch navigation move_base.launch
+
+# launch simple tool for mark multiple points and navigation
+rosrun navigation loop_goals_time
 ```
