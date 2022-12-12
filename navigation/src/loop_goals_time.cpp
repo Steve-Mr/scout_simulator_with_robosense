@@ -109,9 +109,9 @@ int main(int argc, char** argv){
     
     if(points_list.size() != 0){
     	// 超过一个标记点：设置终点为第一个标记点
-    	if(points_list.size() != 1){
-    		points_list.push_back(points_list.front());
-    	}
+    	// if(points_list.size() != 1){
+    	// 	points_list.push_back(points_list.front());
+    	// }
     	for(auto const& point: points_list){
     		ROS_INFO("goal is %f", point->point.x);
     		ROS_INFO("goal is %f", point->point.y);
