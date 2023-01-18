@@ -49,5 +49,6 @@
     <rosparam file="$(find navigation)/param/local_costmap_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find navigation)/param/global_costmap_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find navigation)/param/base_local_planner_params.yaml" command="load" />
+    <param name="planner_frequency" type="double" value="1.0" />
   </node>
 </launch>
