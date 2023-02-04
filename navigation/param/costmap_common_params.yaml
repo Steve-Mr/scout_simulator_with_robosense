@@ -1,8 +1,8 @@
 # Maximum range sensor reading in meters that results in an obstacle being placed in the costmap
-obstacle_range: 5.0
+obstacle_range: 4.5
 
 # Outside of this range is considered free space
-raytrace_range: 5.5
+raytrace_range: 5.0
 
 # Footprint of the robot with (0,0) being the center (in meters)
 footprint: [[-0.55, -0.40], [-0.55, 0.40], [0.55, 0.40], [0.55, -0.40]]
@@ -17,23 +17,23 @@ global_frame: map
 robot_base_frame: base_link
 
 # Frequency in Hz for the costmap to be updated
-update_frequency: 10.0
+update_frequency: 1.0
 
 # Frequency in Hz for the costmap to publish display information
-publish_frequency: 10.0
+publish_frequency: 1.0
 
 # Delay in transform tf data that is tolerable in seconds
 transform_tolerance: 0.5
 
 # Width of the map in meters
-width: 75
+# width: 75
 
 # Height of the map in meters
-height: 75
+# height: 75
 
 rolling_window: true
 
-subscribe_to_updates: true
+# subscribe_to_updates: true
 
 # Each costmap is layered
 plugins:
@@ -55,3 +55,4 @@ obstacle_layer:
 # Map layer that adds a cushion in meters around obstacles
 inflation_layer:
   inflation_radius: 5.0
+  cost_scaling_factor: 5.0
