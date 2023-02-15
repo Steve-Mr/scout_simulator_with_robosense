@@ -10,7 +10,7 @@
   <arg name="map_file" default="$(find navigation)/map/test.yaml"/>
   
   <!-- Modified Map File -->
-  <arg name="map_file_modified" default="$(find navigation)/map/test_mod.yaml"/>
+  <arg name="map_file_modified" default="$(find navigation)/map/test2.yaml"/>
 	
   <!-- Map Server -->
   <!-- Publish: /map, /map_metadata -->

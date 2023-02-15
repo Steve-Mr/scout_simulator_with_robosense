@@ -11,3 +11,6 @@
 [submodule "apiserver/scripts"]
 	path = apiserver/scripts
 	url = https://github.com/Steve-Mr/ros_nodejs_backend.git
+[submodule "gazebo_ros_2Dmap_plugin"]
+	path = gazebo_ros_2Dmap_plugin
+	url = https://github.com/marinaKollmitz/gazebo_ros_2Dmap_plugin.git

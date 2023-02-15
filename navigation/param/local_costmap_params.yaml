@@ -1,8 +1,8 @@
 # Width of the map in meters
-width: 10
+width: 50
 
 # Height of the map in meters
-height: 10
+height: 50
 local_costmap:
   global_frame: odom
   rolling_window: true

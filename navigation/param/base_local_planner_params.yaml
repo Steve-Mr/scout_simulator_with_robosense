@@ -15,4 +15,4 @@ TrajectoryPlannerROS:
   controller_frequency: 10.0
   
   occdist_scale: 0.1
-  # dwa: false
+  dwa: false
