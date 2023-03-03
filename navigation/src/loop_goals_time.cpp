@@ -28,6 +28,9 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 
 int main(int argc, char** argv){
 
+	// 圈数
+	int laps = 3;
+
     // Connect to ROS
     ros::init(argc, argv, "simple_navigation_goals");
   
@@ -93,17 +96,6 @@ int main(int argc, char** argv){
 
 		// 将标记点添加到列表中
 		points_list.push_back(waypoint);
-
-		// double theta = 0.0;
-		// if (points_list.size() != 1)
-		// 	theta = atan2(waypoint->point.y - prev_waypoint->point.y, waypoint->point.x - prev_waypoint->point.x);
-		// else
-		// {
-		// 	theta = atan2(waypoint->point.y - 0.0, waypoint->point.x - 0.0);
-		// }
-		// prev_waypoint = waypoint;
-		// geometry_msgs::Quaternion q = tf::createQuaternionMsgFromYaw(theta);
-		// points_marker.pose.orientation = q;
     	
     	// 生成并发布 Marker 在 rviz 中显示
     	geometry_msgs::Point p;
@@ -125,13 +117,17 @@ int main(int argc, char** argv){
     
     if(points_list.size() != 0){
     	// 超过一个标记点：设置终点为第一个标记点
-    	// if(points_list.size() != 1){
-    	// 	points_list.push_back(points_list.front());
-    	// }
+    	if(points_list.size() != 1){
+    		points_list.push_back(points_list.front());
+    	}
 		auto prev_iter = points_list.begin();
-    	for(auto it = points_list.begin(); it != points_list.end(); ++it){
+		auto it = points_list.begin();
+		while(it != points_list.end()){
+    	// for(auto it = points_list.begin(); it != points_list.end(); ++it){
 			auto const& point = *it;
 			auto const& prev = *prev_iter;
+
+			ROS_INFO("%d laps left", laps);
 			
     		ROS_INFO("goal is %f", point->point.x);
     		ROS_INFO("goal is %f", point->point.y);
@@ -192,7 +188,7 @@ int main(int argc, char** argv){
  
     		if(ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
       			ROS_INFO("The robot has arrived at the goal location");
-      			for(int i = 0; i < 9; i++){
+      			for(int i = 0; i < 5; i++){
       				sleep(1);
       				ROS_INFO("waiting");
       			}
@@ -200,9 +196,17 @@ int main(int argc, char** argv){
       			ROS_INFO("the wait is over");
       			}
     		else
-      			ROS_INFO("The robot may have failed to reach the goal location");
-    	}
-    }
+				ROS_INFO("The robot may have failed to reach the goal location");
+
+			it++;
+			if (it == points_list.end() && laps != 1)
+			{
+				laps--;
+				it = points_list.begin();
+				prev_iter = points_list.begin();
+			}
+		}
+	}
     
   return 0;
 }
