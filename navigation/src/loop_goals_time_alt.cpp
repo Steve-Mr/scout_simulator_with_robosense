@@ -23,7 +23,15 @@
 
 #include <geometry_msgs/Pose.h>
 
+#include <filesystem>
+#include <ros/package.h>
+#include <fstream>
+#include <iomanip>
+
+#include <ros/master.h>
+
 using namespace std;
+namespace fs = std::filesystem;
 
 struct MarkerParam
 {
@@ -33,6 +41,38 @@ struct MarkerParam
     double scale_y;
     double scale_z;
 };
+
+class Logger {
+public:
+    Logger(const std::string& filename)
+    {
+        const char *home = getenv("HOME");
+        if (home == NULL)
+        {
+            std::cerr << "HOME environment variable is not set" << std::endl;
+            return;
+        }
+        std::string logger_file = std::string(home) + std::string(filename);
+        ofs_.open(logger_file.c_str(), std::ios_base::out | std::ios_base::app);
+    }
+
+    ~Logger() {
+        ofs_.close();
+    }
+
+    void log(const std::string& message) {
+        std::time_t now = std::time(nullptr);
+        std::tm* t = std::localtime(&now);
+        ofs_ << std::put_time(t, "%Y-%m-%d %H:%M:%S") << ": " << message << std::endl;
+        std::cout << message << std::endl;
+    }
+
+private:
+    std::ofstream ofs_;
+};
+
+std::string logger_name = "/logger_goal.txt";
+Logger logger(logger_name);
 
 // Action specification for move_base
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
@@ -97,6 +137,12 @@ std::list<ptr_PointStamped> record_points()
     		
    		ROS_INFO("input point is (%f, %f, %f)", waypoint->point.x, waypoint->point.y, waypoint->point.z);
 
+        std::ostringstream messageStream;
+        messageStream << "(" << waypoint->point.x << ", " << waypoint->point.y << ", " << waypoint->point.z << ")";
+        std::string message = messageStream.str();
+
+        logger.log(message);
+
 		// 将标记点添加到列表中
 		points_list.push_back(waypoint);
     	
@@ -114,6 +160,8 @@ std::list<ptr_PointStamped> record_points()
 		}
 		marker_pub.publish(points_marker);    	
     }
+
+    logger.log("==============");
 
     return points_list;
 }
@@ -137,6 +185,12 @@ move_base_msgs::MoveBaseGoal point_to_goal(
 
     ROS_INFO("goal is %f", point.x);
     ROS_INFO("goal is %f", point.y);
+
+    std::ostringstream messageStream;
+    messageStream << "Current Goal: (" << point.x << ", " << point.y << ")";
+    std::string message = messageStream.str();
+
+    logger.log(message);
 
     double theta = atan2(point.y - prev.y, point.x - prev.x);
 
@@ -168,11 +222,13 @@ void start_navigation(MoveBaseClient &ac, move_base_msgs::MoveBaseGoal goal, int
 {
 
     // 发送目标使小车开始移动，超时时间 180s
-    ac.sendGoalAndWait(goal, ros::Duration(180.0, 0), ros::Duration(180.0, 0));
+    ac.sendGoalAndWait(goal, ros::Duration(1.0, 0), ros::Duration(1.0, 0));
 
     if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
     {
         ROS_INFO("The robot has arrived at the goal location");
+        logger.log("The robot has arrived at the goal location.");
+        logger.log("--------------");
         for (int i = 0; i < 5; i++)
         {
             sleep(1);
@@ -183,36 +239,131 @@ void start_navigation(MoveBaseClient &ac, move_base_msgs::MoveBaseGoal goal, int
     else
     {
         ROS_INFO("The robot may have failed to reach the goal location");
+        logger.log("The robot may have failed to reach the goal location.");
+        logger.log("--------------");
         if (max_retry > 0)
         {
+            logger.log("Retrying... \n Remaining retry count: " + std::to_string(max_retry));
             start_navigation(ac, goal, --max_retry);
         }
     }
 }
 
+void stop_recording(FILE *ssrProcess)
+{
+    fprintf(ssrProcess, "record-save\n");
+    fflush(ssrProcess);
+    fprintf(ssrProcess, "quit\n");
+    fflush(ssrProcess);
+
+    pclose(ssrProcess);
+
+    const char *home = getenv("HOME");
+    if (home == NULL)
+    {
+        std::cerr << "HOME environment variable is not set" << std::endl;
+        return;
+    }
+    std::cout << "Home directory is: " << home << std::endl;
+
+    std::string path = std::string(home) + "/视频";
+
+    sleep(3);
+
+    fs::directory_iterator dirIter(path);
+    fs::path newestFile;
+    fs::path logger_file = std::string(home) + logger_name;
+
+    std::filesystem::file_time_type newestTime = fs::last_write_time((*dirIter).path());
+    for (auto &file : dirIter)
+    {
+        if (fs::is_regular_file(file.path()))
+        {
+            std::cout << "Current file: " << file.path() << std::endl;
+            std::filesystem::file_time_type modifiedTime = fs::last_write_time(file.path());
+            if (modifiedTime > newestTime)
+            {
+                newestTime = modifiedTime;
+                newestFile = file.path();
+            }
+        }
+    }
+    std::cout << "Newest file: " << newestFile << std::endl;
+
+    std::string package_path = ros::package::getPath("navigation");
+
+    std::cout << "navigation path: " << package_path << std::endl;
+
+    std::string dir_name = newestFile.stem().string();
+    std::string prefix = "simplescreenrecorder-";
+    if (dir_name.find(prefix) == 0)
+    {
+        dir_name.erase(0, prefix.length());
+    }
+
+    fs::path destDir = package_path + "/logs/" + dir_name;
+    if (!fs::exists(destDir))
+    {
+        fs::create_directory(destDir);
+    }
+
+    try
+    {
+        // move the file to the destination directory
+        fs::rename(newestFile, destDir / newestFile.filename());
+        fs::rename(logger_file, destDir / logger_file.filename());
+
+        std::cout << "File moved successfully." << std::endl;
+    }
+    catch (const std::filesystem::filesystem_error &e)
+    {
+        std::cerr << "Error moving file: " << e.what() << std::endl;
+    }
+}
+
 int main(int argc, char** argv){
+        logger.log("Hello, world!");
+
 
 	// 圈数
-	int laps = 3;
+	int laps = 1;
 
     // Connect to ROS
     ros::init(argc, argv, "simple_navigation_goals");
-  
     // tell the action client that we want to spin a thread by default
     MoveBaseClient ac("move_base", true);
-  
     // Wait for the action server to come up so that we can begin processing goals.
     while(!ac.waitForServer(ros::Duration(5.0))){
       ROS_INFO("Waiting for the move_base action server to come up");
     }
-        
+
+
+    // Get the list of running ROS nodes
+    std::vector<std::string> nodes;
+    if (ros::master::getNodes(nodes)) {
+        for (const auto& node : nodes) {
+            logger.log("Found node: " + std::string(node));
+        }
+    } else {
+        ROS_ERROR("Failed to get list of running nodes.");
+    }
+
+    logger.log("==============");
+
     // 在 visualization_marker 上广播
     ros::NodeHandle n;
     marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 
-    std::list<ptr_PointStamped> points_list = record_points();
-    
     cout << "\nPlease choose one point on map to start navigation."<<endl;
+
+    std::list<ptr_PointStamped> points_list = record_points();
+
+    // Start recording
+    FILE* ssrProcess = popen("simplescreenrecorder --start-recording --start-hidden", "w");
+    if (!ssrProcess) {
+        printf("Failed to start SimpleScreenRecorder process.\n");
+        return -1;
+    }
 
     if (points_list.size() != 0)
     {
@@ -234,6 +385,10 @@ int main(int argc, char** argv){
             start_navigation(ac, goal, 3);
         }
     }
+
+    cout <<"\n should stop recording" << endl;
+
+    stop_recording(ssrProcess);
 
   return 0;
 }
