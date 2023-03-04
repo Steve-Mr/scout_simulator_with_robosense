@@ -29,6 +29,15 @@
 #include <iomanip>
 
 #include <ros/master.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+
+#include <csignal>
+
+#include <chrono>
+#include <ctime>
+#include <sstream>
+
+#include <move_base_msgs/RecoveryStatus.h>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -80,6 +89,9 @@ typedef boost::shared_ptr<geometry_msgs::PointStamped const> ptr_PointStamped;
 
 ros::Publisher marker_pub;
 
+FILE* ssrProcess = popen("simplescreenrecorder --start-recording --start-hidden", "w");
+bool recording_started = false;
+
 visualization_msgs::Marker get_marker(MarkerParam marker_param)
 {
     visualization_msgs::Marker marker;
@@ -117,6 +129,13 @@ void set_pose(geometry_msgs::Pose& target, geometry_msgs::Point p ,geometry_msgs
 
 std::list<ptr_PointStamped> record_points()
 {
+        if (!ssrProcess) {
+        printf("Failed to start SimpleScreenRecorder process.\n");
+    }
+    fprintf(ssrProcess, "record-start\n");
+    fflush(ssrProcess);
+    recording_started = true;
+
     MarkerParam points_param = {
         "points",
         visualization_msgs::Marker::POINTS,
@@ -124,6 +143,8 @@ std::list<ptr_PointStamped> record_points()
     visualization_msgs::Marker points_marker = get_marker(points_param);
 
     std::list<ptr_PointStamped> points_list;
+
+    logger.log("Received points: ");
 
     while(true){
     	// 监听 /clicked_point topic，获取点坐标，超时时间 5s
@@ -183,15 +204,6 @@ move_base_msgs::MoveBaseGoal point_to_goal(
     goal.target_pose.header.frame_id = "map";
     goal.target_pose.header.stamp = ros::Time::now();
 
-    ROS_INFO("goal is %f", point.x);
-    ROS_INFO("goal is %f", point.y);
-
-    std::ostringstream messageStream;
-    messageStream << "Current Goal: (" << point.x << ", " << point.y << ")";
-    std::string message = messageStream.str();
-
-    logger.log(message);
-
     double theta = atan2(point.y - prev.y, point.x - prev.x);
 
     geometry_msgs::Quaternion q = tf::createQuaternionMsgFromYaw(theta);
@@ -218,16 +230,33 @@ move_base_msgs::MoveBaseGoal point_to_goal(
     return goal;
 }
 
+void log_amclpose()
+{
+    auto amcl_pose = ros::topic::waitForMessage<geometry_msgs::PoseWithCovarianceStamped>("/amcl_pose", ros::Duration(5.0));
+
+        std::ostringstream messageStream;
+        messageStream << "Current amcl_pose: (" << amcl_pose->pose.pose.position.x << ", " << amcl_pose->pose.pose.position.y << "), " << tf::getYaw(amcl_pose->pose.pose.orientation) << " degrees";
+        std::string message = messageStream.str();
+
+        logger.log(message);
+}
+
 void start_navigation(MoveBaseClient &ac, move_base_msgs::MoveBaseGoal goal, int max_retry)
 {
+        std::ostringstream messageStream;
+        messageStream << "Current Goal: (" << goal.target_pose.pose.position.x << ", " << goal.target_pose.pose.position.y << "), " << tf::getYaw(goal.target_pose.pose.orientation) << " degrees";
+        std::string message = messageStream.str();
 
-    // 发送目标使小车开始移动，超时时间 180s
-    ac.sendGoalAndWait(goal, ros::Duration(1.0, 0), ros::Duration(1.0, 0));
+        logger.log(message);
 
-    if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
-    {
+        // 发送目标使小车开始移动，超时时间 180s
+        ac.sendGoalAndWait(goal, ros::Duration(180.0, 0), ros::Duration(180.0, 0));
+
+        if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
+        {
         ROS_INFO("The robot has arrived at the goal location");
         logger.log("The robot has arrived at the goal location.");
+        log_amclpose();
         logger.log("--------------");
         for (int i = 0; i < 5; i++)
         {
@@ -237,19 +266,61 @@ void start_navigation(MoveBaseClient &ac, move_base_msgs::MoveBaseGoal goal, int
         ROS_INFO("the wait is over");
     }
     else
-    {
-        ROS_INFO("The robot may have failed to reach the goal location");
-        logger.log("The robot may have failed to reach the goal location.");
-        logger.log("--------------");
+    {	
+        switch(ac.getState().state_)
+        {
+            case actionlib::SimpleClientGoalState::PREEMPTED:
+                logger.log("PREEMPTED");
+                logger.log("The goal received a cancel request after it started executing and has since completed its execution");
+                logger.log("--------------");
+                break;
+            case actionlib::SimpleClientGoalState::ABORTED:
+                max_retry = 0;
+                logger.log("ABORTED");
+                logger.log("The goal was aborted during execution by the action server due to some failure");
+                logger.log("--------------");
+                break;
+            case actionlib::SimpleClientGoalState::RECALLED:
+                logger.log("RECALLED");
+                logger.log("The goal received a cancel request before it started executing and was successfully cancelled");
+                logger.log("--------------");
+                break;
+            
+        }
+        log_amclpose();
         if (max_retry > 0)
         {
-            logger.log("Retrying... \n Remaining retry count: " + std::to_string(max_retry));
+            logger.log("Retrying...");
+            logger.log("Remaining retry count: " + std::to_string(max_retry));
+            logger.log("--------------");
             start_navigation(ac, goal, --max_retry);
+        }
+        else
+        {
+            logger.log("The current goal may be unreachable, skipping the current goal");
+            logger.log("--------------");
         }
     }
 }
 
-void stop_recording(FILE *ssrProcess)
+// Callback function for handling incoming messages
+void recoveryStatusCallback(const move_base_msgs::RecoveryStatus::ConstPtr& msg) {
+    // Check if the message has any statuses
+    // if (msg->status_list.size() > 0) {
+        // Loop through the statuses and log the message for each one
+        // for (const auto& status : msg->status_list) {
+            logger.log("|==============|");
+            logger.log("Recovery status received: ");
+            logger.log("current_recovery_number: " + std::to_string(msg->current_recovery_number));
+            logger.log("total_number_of_recoveries: " + std::to_string(msg->total_number_of_recoveries));
+            logger.log("recovery_behavior_name: " + msg->recovery_behavior_name);
+            logger.log("|==============|");
+        // }
+    // }
+}
+
+// void stop_recording(FILE *ssrProcess)
+void stop_recording()
 {
     fprintf(ssrProcess, "record-save\n");
     fflush(ssrProcess);
@@ -257,6 +328,15 @@ void stop_recording(FILE *ssrProcess)
     fflush(ssrProcess);
 
     pclose(ssrProcess);
+
+    auto now = std::chrono::system_clock::now();
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    auto time_t = std::chrono::system_clock::to_time_t(now);
+
+    // Convert to string
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time_t), "%Y-%m-%d-%H-%M-%S.") << std::setfill('0') << std::setw(3) << ms.count();
+    std::string dir_name = ss.str();
 
     const char *home = getenv("HOME");
     if (home == NULL)
@@ -266,40 +346,11 @@ void stop_recording(FILE *ssrProcess)
     }
     std::cout << "Home directory is: " << home << std::endl;
 
-    std::string path = std::string(home) + "/视频";
-
-    sleep(3);
-
-    fs::directory_iterator dirIter(path);
-    fs::path newestFile;
     fs::path logger_file = std::string(home) + logger_name;
-
-    std::filesystem::file_time_type newestTime = fs::last_write_time((*dirIter).path());
-    for (auto &file : dirIter)
-    {
-        if (fs::is_regular_file(file.path()))
-        {
-            std::cout << "Current file: " << file.path() << std::endl;
-            std::filesystem::file_time_type modifiedTime = fs::last_write_time(file.path());
-            if (modifiedTime > newestTime)
-            {
-                newestTime = modifiedTime;
-                newestFile = file.path();
-            }
-        }
-    }
-    std::cout << "Newest file: " << newestFile << std::endl;
 
     std::string package_path = ros::package::getPath("navigation");
 
     std::cout << "navigation path: " << package_path << std::endl;
-
-    std::string dir_name = newestFile.stem().string();
-    std::string prefix = "simplescreenrecorder-";
-    if (dir_name.find(prefix) == 0)
-    {
-        dir_name.erase(0, prefix.length());
-    }
 
     fs::path destDir = package_path + "/logs/" + dir_name;
     if (!fs::exists(destDir))
@@ -310,7 +361,7 @@ void stop_recording(FILE *ssrProcess)
     try
     {
         // move the file to the destination directory
-        fs::rename(newestFile, destDir / newestFile.filename());
+        // fs::rename(newestFile, destDir / newestFile.filename());
         fs::rename(logger_file, destDir / logger_file.filename());
 
         std::cout << "File moved successfully." << std::endl;
@@ -319,11 +370,59 @@ void stop_recording(FILE *ssrProcess)
     {
         std::cerr << "Error moving file: " << e.what() << std::endl;
     }
+
+    if (recording_started)
+    {
+        std::string path = std::string(home) + "/视频";
+
+        sleep(3);
+
+        fs::directory_iterator dirIter(path);
+        fs::path newestFile;
+        std::filesystem::file_time_type newestTime = fs::last_write_time((*dirIter).path());
+        for (auto &file : dirIter)
+        {
+            if (fs::is_regular_file(file.path()))
+            {
+                std::cout << "Current file: " << file.path() << std::endl;
+                std::filesystem::file_time_type modifiedTime = fs::last_write_time(file.path());
+                if (modifiedTime > newestTime)
+                {
+                    newestTime = modifiedTime;
+                    newestFile = file.path();
+                }
+            }
+        }
+        std::cout << "Newest file: " << newestFile << std::endl;
+        try
+        {
+            // move the file to the destination directory
+            fs::rename(newestFile, destDir / newestFile.filename());
+            // fs::rename(logger_file, destDir / logger_file.filename());
+
+            std::cout << "File moved successfully." << std::endl;
+        }
+        catch (const std::filesystem::filesystem_error &e)
+        {
+            std::cerr << "Error moving file: " << e.what() << std::endl;
+        }
+    }
+
+    ros::shutdown(); // Close the node
+}
+
+// Signal handler function
+void signalHandler(int signum) {
+  std::cout << "Received signal " << signum << std::endl;
+  // Perform any cleanup or shutdown actions here
+  stop_recording();
+  exit(signum);
 }
 
 int main(int argc, char** argv){
         logger.log("Hello, world!");
 
+    signal(SIGINT, signalHandler);
 
 	// 圈数
 	int laps = 1;
@@ -354,16 +453,17 @@ int main(int argc, char** argv){
     ros::NodeHandle n;
     marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 
+        // Subscribe to the move_base/recovery_status topic
+    ros::Subscriber sub = n.subscribe<move_base_msgs::RecoveryStatus>(
+        "/move_base/recovery_status", 1, recoveryStatusCallback);
+    
+
     cout << "\nPlease choose one point on map to start navigation."<<endl;
 
     std::list<ptr_PointStamped> points_list = record_points();
 
     // Start recording
-    FILE* ssrProcess = popen("simplescreenrecorder --start-recording --start-hidden", "w");
-    if (!ssrProcess) {
-        printf("Failed to start SimpleScreenRecorder process.\n");
-        return -1;
-    }
+    // FILE* ssrProcess = popen("simplescreenrecorder --start-recording --start-hidden", "w");
 
     if (points_list.size() != 0)
     {
@@ -388,7 +488,10 @@ int main(int argc, char** argv){
 
     cout <<"\n should stop recording" << endl;
 
-    stop_recording(ssrProcess);
+    // stop_recording(ssrProcess);
+    stop_recording();
+
+    ros::spin();
 
   return 0;
 }
