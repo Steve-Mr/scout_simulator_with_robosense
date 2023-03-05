@@ -39,6 +39,8 @@
 
 #include <move_base_msgs/RecoveryStatus.h>
 
+#include <XmlRpcValue.h>
+
 using namespace std;
 namespace fs = std::filesystem;
 
@@ -98,10 +100,7 @@ bool recording_started = false;
 // Callback function for handling incoming messages
 void recoveryStatusCallback(const move_base_msgs::RecoveryStatus::ConstPtr &msg)
 {
-    // Check if the message has any statuses
-    // if (msg->status_list.size() > 0) {
-    // Loop through the statuses and log the message for each one
-    // for (const auto& status : msg->status_list) {
+
     logger.log("**************");
     logger.log("*Recovery status received: ");
     logger.log("*recovery was trigggered at: (" + std::to_string(msg->pose_stamped.pose.position.x) + ", " + std::to_string(msg->pose_stamped.pose.position.y) + ")");
@@ -109,8 +108,6 @@ void recoveryStatusCallback(const move_base_msgs::RecoveryStatus::ConstPtr &msg)
     logger.log("*total_number_of_recoveries: " + std::to_string(msg->total_number_of_recoveries));
     logger.log("*recovery_behavior_name: " + msg->recovery_behavior_name);
     logger.log("**************");
-    // }
-    // }
 }
 
 visualization_msgs::Marker get_marker(MarkerParam marker_param)
@@ -273,7 +270,7 @@ void start_navigation(MoveBaseClient &ac, move_base_msgs::MoveBaseGoal goal, int
     messageStream << "Current Goal: (" << goal.target_pose.pose.position.x << ", " << goal.target_pose.pose.position.y << "), " << tf::getYaw(goal.target_pose.pose.orientation) << " degrees";
     std::string message = messageStream.str();
 
-logger.log("==============");
+    logger.log("==============");
     logger.log(message);
 
     ros::NodeHandle nh;
@@ -337,13 +334,11 @@ logger.log("==============");
                 logger.log("The current goal may be unreachable, skipping the current goal");
                 logger.log("--------------");
             }
-                            
-                break;
+
+            break;
         }
     }
 }
-
-
 
 void resultCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
 {
@@ -392,7 +387,6 @@ void stop_recording()
     try
     {
         // move the file to the destination directory
-        // fs::rename(newestFile, destDir / newestFile.filename());
         fs::rename(logger_file, destDir / logger_file.filename());
 
         std::cout << "File moved successfully." << std::endl;
@@ -400,6 +394,24 @@ void stop_recording()
     catch (const std::filesystem::filesystem_error &e)
     {
         std::cerr << "Error moving file: " << e.what() << std::endl;
+    }
+
+    fs::path param_dir = package_path + "/param";
+
+    for (const auto &entry : std::filesystem::recursive_directory_iterator(param_dir))
+    {
+        std::filesystem::path currentPath = entry.path();
+        std::filesystem::path relativePath = std::filesystem::relative(currentPath, param_dir);
+        std::filesystem::path destinationPath = destDir / relativePath;
+
+        if (std::filesystem::is_directory(currentPath))
+        {
+            std::filesystem::create_directory(destinationPath);
+        }
+        else
+        {
+            std::filesystem::copy(currentPath, destinationPath, std::filesystem::copy_options::overwrite_existing);
+        }
     }
 
     if (recording_started)
@@ -458,7 +470,11 @@ int main(int argc, char **argv)
     signal(SIGINT, signalHandler);
 
     // 圈数
-    int laps = 1;
+    int laps = 3;
+    if (argc > 1)
+    {
+        laps = std::stoi(argv[1]);
+    }
 
     // Connect to ROS
     ros::init(argc, argv, "simple_navigation_goals");
@@ -486,68 +502,60 @@ int main(int argc, char **argv)
 
     logger.log("==============");
 
-    // Get the private namespace for move_base
-ros::NodeHandle nh_priv("~move_base");
+    std::string param_name = "/move_base";
+    XmlRpc::XmlRpcValue param_value;
 
-// Get all the parameters for move_base
-XmlRpc::XmlRpcValue params;
-if (nh_priv.getParam("", params))
-{
-  ROS_INFO("Successfully retrieved move_base parameters");
-  ROS_INFO_STREAM("Parameters: " << params);
-}
-else
-{
-  ROS_WARN("Failed to retrieve move_base parameters");
-}
+    logger.log("==============");
+
+    if (ros::param::get(param_name, param_value))
+    {
+        for (auto it = param_value.begin(); it != param_value.end(); ++it)
+        {
+            std::string first = static_cast<std::string>(it->first).c_str();
+            logger.log(first + ": ");
+            std::stringstream ss;
+            ss << it->second;
+            logger.log(ss.str());
+        }
+    }
+    else
+    {
+        ROS_WARN_STREAM("Parameter " << param_name << " does not exist");
+    }
+    logger.log("==============");
 
     // 在 visualization_marker 上广播
     ros::NodeHandle n;
     marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 
-    // Subscribe to the move_base/recovery_status topic
-    // ros::Subscriber sub = n.subscribe<move_base_msgs::RecoveryStatus>("/move_base/recovery_status", 1, recoveryStatusCallback);
-
-    // ros::Subscriber sub_ = n.subscribe("/amcl_pose", 1, resultCallback);
-
     cout << "\nPlease choose one point on map to start navigation." << endl;
 
     std::list<ptr_PointStamped> points_list = record_points();
 
-    // while (ros::ok())
-    // {
-    //     ros::spinOnce();
+    if (points_list.size() != 0)
+    {
+        // 超过一个标记点：设置终点为第一个标记点
+        if (points_list.size() != 1)
+            points_list.push_back(points_list.front());
 
-        if (points_list.size() != 0)
+        auto prev_iter = points_list.begin();
+        auto it = points_list.begin();
+        while (it != points_list.end())
         {
-            // 超过一个标记点：设置终点为第一个标记点
-            if (points_list.size() != 1)
-                points_list.push_back(points_list.front());
 
-            auto prev_iter = points_list.begin();
-            auto it = points_list.begin();
-            while (it != points_list.end())
-            {
+            ROS_INFO("%d laps left", laps);
 
-                ROS_INFO("%d laps left", laps);
+            move_base_msgs::MoveBaseGoal goal = point_to_goal(points_list, it, prev_iter, laps);
 
-                move_base_msgs::MoveBaseGoal goal = point_to_goal(points_list, it, prev_iter, laps);
+            cout << "\nGoing to next point." << endl;
 
-                cout << "\nGoing to next point." << endl;
-
-                start_navigation(ac, goal, 3);
-            }
+            start_navigation(ac, goal, 3);
         }
-
-        // ros::Duration(0.1).sleep();
-    // }
+    }
 
     cout << "\n should stop recording" << endl;
 
-    // stop_recording(ssrProcess);
     stop_recording();
-
-    // ros::spin();
 
     return 0;
 }
