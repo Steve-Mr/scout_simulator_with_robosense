@@ -3,7 +3,7 @@
 #include <actionlib/client/simple_action_client.h>
 #include <iostream>
 
-#include <unistd.h>               // for linux 
+#include <unistd.h> // for linux
 
 #include <boost/shared_ptr.hpp>
 #include <std_msgs/String.h>
@@ -11,7 +11,7 @@
 
 #include <geometry_msgs/PointStamped.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Point.h> 
+#include <geometry_msgs/Point.h>
 
 #include <visualization_msgs/Marker.h>
 
@@ -51,9 +51,10 @@ struct MarkerParam
     double scale_z;
 };
 
-class Logger {
+class Logger
+{
 public:
-    Logger(const std::string& filename)
+    Logger(const std::string &filename)
     {
         const char *home = getenv("HOME");
         if (home == NULL)
@@ -65,13 +66,15 @@ public:
         ofs_.open(logger_file.c_str(), std::ios_base::out | std::ios_base::app);
     }
 
-    ~Logger() {
+    ~Logger()
+    {
         ofs_.close();
     }
 
-    void log(const std::string& message) {
+    void log(const std::string &message)
+    {
         std::time_t now = std::time(nullptr);
-        std::tm* t = std::localtime(&now);
+        std::tm *t = std::localtime(&now);
         ofs_ << std::put_time(t, "%Y-%m-%d %H:%M:%S") << ": " << message << std::endl;
         std::cout << message << std::endl;
     }
@@ -89,31 +92,49 @@ typedef boost::shared_ptr<geometry_msgs::PointStamped const> ptr_PointStamped;
 
 ros::Publisher marker_pub;
 
-FILE* ssrProcess = popen("simplescreenrecorder --start-recording --start-hidden", "w");
+FILE *ssrProcess = popen("simplescreenrecorder --start-recording --start-hidden >nul 2>nul", "w");
 bool recording_started = false;
+
+// Callback function for handling incoming messages
+void recoveryStatusCallback(const move_base_msgs::RecoveryStatus::ConstPtr &msg)
+{
+    // Check if the message has any statuses
+    // if (msg->status_list.size() > 0) {
+    // Loop through the statuses and log the message for each one
+    // for (const auto& status : msg->status_list) {
+    logger.log("**************");
+    logger.log("*Recovery status received: ");
+    logger.log("*recovery was trigggered at: (" + std::to_string(msg->pose_stamped.pose.position.x) + ", " + std::to_string(msg->pose_stamped.pose.position.y) + ")");
+    logger.log("*current_recovery_number: " + std::to_string(msg->current_recovery_number));
+    logger.log("*total_number_of_recoveries: " + std::to_string(msg->total_number_of_recoveries));
+    logger.log("*recovery_behavior_name: " + msg->recovery_behavior_name);
+    logger.log("**************");
+    // }
+    // }
+}
 
 visualization_msgs::Marker get_marker(MarkerParam marker_param)
 {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "map";
     marker.header.stamp = ros::Time();
-    
-    // 设置 Marker 的 namespace 和 id。 
+
+    // 设置 Marker 的 namespace 和 id。
     // 相同的 namespace 和 id 相同时新 marker 会覆盖旧值
     marker.ns = marker_param.nspace;
-    marker.id =0;
+    marker.id = 0;
 
     // 动作：支持添加 ADD/删除 DELETE/删除全部 DELETEALL
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.orientation.w = 1.0;
-    
+
     marker.type = marker_param.type;
-    
+
     // Marker 的比例，这里 1.0 为 1m
     marker.scale.x = marker_param.scale_x;
     marker.scale.y = marker_param.scale_y;
     marker.scale.z = marker_param.scale_z;
-    
+
     // 设置 Marker 颜色（此处为绿色
     marker.color.g = 1.0f;
     marker.color.a = 1.0;
@@ -121,7 +142,7 @@ visualization_msgs::Marker get_marker(MarkerParam marker_param)
     return marker;
 }
 
-void set_pose(geometry_msgs::Pose& target, geometry_msgs::Point p ,geometry_msgs::Quaternion q)
+void set_pose(geometry_msgs::Pose &target, geometry_msgs::Point p, geometry_msgs::Quaternion q)
 {
     target.position = p;
     target.orientation = q;
@@ -129,7 +150,8 @@ void set_pose(geometry_msgs::Pose& target, geometry_msgs::Point p ,geometry_msgs
 
 std::list<ptr_PointStamped> record_points()
 {
-        if (!ssrProcess) {
+    if (!ssrProcess)
+    {
         printf("Failed to start SimpleScreenRecorder process.\n");
     }
     fprintf(ssrProcess, "record-start\n");
@@ -146,17 +168,19 @@ std::list<ptr_PointStamped> record_points()
 
     logger.log("Received points: ");
 
-    while(true){
-    	// 监听 /clicked_point topic，获取点坐标，超时时间 5s
-    	// 超时返回值为空
-    	auto waypoint = ros::topic::waitForMessage<geometry_msgs::PointStamped>("/clicked_point", ros::Duration(5.0));   
-    		
-    	if(waypoint == NULL){
-			cout<<"\nThe point selection process is over."<<endl;
-			break;
-    	}
-    		
-   		ROS_INFO("input point is (%f, %f, %f)", waypoint->point.x, waypoint->point.y, waypoint->point.z);
+    while (true)
+    {
+        // 监听 /clicked_point topic，获取点坐标，超时时间 5s
+        // 超时返回值为空
+        auto waypoint = ros::topic::waitForMessage<geometry_msgs::PointStamped>("/clicked_point", ros::Duration(5.0));
+
+        if (waypoint == NULL)
+        {
+            cout << "\nThe point selection process is over." << endl;
+            break;
+        }
+
+        ROS_INFO("input point is (%f, %f, %f)", waypoint->point.x, waypoint->point.y, waypoint->point.z);
 
         std::ostringstream messageStream;
         messageStream << "(" << waypoint->point.x << ", " << waypoint->point.y << ", " << waypoint->point.z << ")";
@@ -164,22 +188,24 @@ std::list<ptr_PointStamped> record_points()
 
         logger.log(message);
 
-		// 将标记点添加到列表中
-		points_list.push_back(waypoint);
-    	
-    	// 生成并发布 Marker 在 rviz 中显示
-    	geometry_msgs::Point p = waypoint->point;
+        // 将标记点添加到列表中
+        points_list.push_back(waypoint);
 
-		points_marker.points.push_back(p);
-	
-		while (marker_pub.getNumSubscribers() < 1){
-      		if (!ros::ok()){
-        		break;
-      		}
-      		ROS_WARN_ONCE("Please create a subscriber to the marker");
-    		sleep(1);
-		}
-		marker_pub.publish(points_marker);    	
+        // 生成并发布 Marker 在 rviz 中显示
+        geometry_msgs::Point p = waypoint->point;
+
+        points_marker.points.push_back(p);
+
+        while (marker_pub.getNumSubscribers() < 1)
+        {
+            if (!ros::ok())
+            {
+                break;
+            }
+            ROS_WARN_ONCE("Please create a subscriber to the marker");
+            sleep(1);
+        }
+        marker_pub.publish(points_marker);
     }
 
     logger.log("==============");
@@ -188,10 +214,10 @@ std::list<ptr_PointStamped> record_points()
 }
 
 move_base_msgs::MoveBaseGoal point_to_goal(
-    std::list<ptr_PointStamped>& points_list,
-    std::list<ptr_PointStamped>::iterator& it,
-    std::list<ptr_PointStamped>::iterator& prev_iter,
-    int& laps)
+    std::list<ptr_PointStamped> &points_list,
+    std::list<ptr_PointStamped>::iterator &it,
+    std::list<ptr_PointStamped>::iterator &prev_iter,
+    int &laps)
 {
     geometry_msgs::Point prev;
 
@@ -234,48 +260,59 @@ void log_amclpose()
 {
     auto amcl_pose = ros::topic::waitForMessage<geometry_msgs::PoseWithCovarianceStamped>("/amcl_pose", ros::Duration(5.0));
 
-        std::ostringstream messageStream;
-        messageStream << "Current amcl_pose: (" << amcl_pose->pose.pose.position.x << ", " << amcl_pose->pose.pose.position.y << "), " << tf::getYaw(amcl_pose->pose.pose.orientation) << " degrees";
-        std::string message = messageStream.str();
+    std::ostringstream messageStream;
+    messageStream << "Current amcl_pose: (" << amcl_pose->pose.pose.position.x << ", " << amcl_pose->pose.pose.position.y << "), " << tf::getYaw(amcl_pose->pose.pose.orientation) << " degrees";
+    std::string message = messageStream.str();
 
-        logger.log(message);
+    logger.log(message);
 }
 
 void start_navigation(MoveBaseClient &ac, move_base_msgs::MoveBaseGoal goal, int max_retry)
 {
-        std::ostringstream messageStream;
-        messageStream << "Current Goal: (" << goal.target_pose.pose.position.x << ", " << goal.target_pose.pose.position.y << "), " << tf::getYaw(goal.target_pose.pose.orientation) << " degrees";
-        std::string message = messageStream.str();
+    std::ostringstream messageStream;
+    messageStream << "Current Goal: (" << goal.target_pose.pose.position.x << ", " << goal.target_pose.pose.position.y << "), " << tf::getYaw(goal.target_pose.pose.orientation) << " degrees";
+    std::string message = messageStream.str();
 
-        logger.log(message);
+logger.log("==============");
+    logger.log(message);
 
-        // 发送目标使小车开始移动，超时时间 180s
-        ac.sendGoalAndWait(goal, ros::Duration(180.0, 0), ros::Duration(180.0, 0));
+    ros::NodeHandle nh;
 
+    ros::Subscriber sub = nh.subscribe<move_base_msgs::RecoveryStatus>("/move_base/recovery_status", 4, recoveryStatusCallback);
+
+    // 发送目标使小车开始移动，超时时间 180s
+    ac.sendGoalAndWait(goal, ros::Duration(180.0, 0), ros::Duration(180.0, 0));
+
+    while (1)
+    {
+
+        ros::spinOnce();
         if (ac.getState() == actionlib::SimpleClientGoalState::SUCCEEDED)
         {
-        ROS_INFO("The robot has arrived at the goal location");
-        logger.log("The robot has arrived at the goal location.");
-        log_amclpose();
-        logger.log("--------------");
-        for (int i = 0; i < 5; i++)
-        {
-            sleep(1);
-            ROS_INFO("waiting");
+            ROS_INFO("The robot has arrived at the goal location");
+            logger.log("The robot has arrived at the goal location.");
+            log_amclpose();
+            logger.log("--------------");
+            for (int i = 0; i < 5; i++)
+            {
+                sleep(1);
+                ROS_INFO("waiting");
+            }
+            ROS_INFO("the wait is over");
+            sub.shutdown();
+            break;
         }
-        ROS_INFO("the wait is over");
-    }
-    else
-    {	
-        switch(ac.getState().state_)
+        else
         {
+            switch (ac.getState().state_)
+            {
             case actionlib::SimpleClientGoalState::PREEMPTED:
                 logger.log("PREEMPTED");
                 logger.log("The goal received a cancel request after it started executing and has since completed its execution");
                 logger.log("--------------");
                 break;
             case actionlib::SimpleClientGoalState::ABORTED:
-                max_retry = 0;
+                // max_retry = 0;
                 logger.log("ABORTED");
                 logger.log("The goal was aborted during execution by the action server due to some failure");
                 logger.log("--------------");
@@ -285,38 +322,32 @@ void start_navigation(MoveBaseClient &ac, move_base_msgs::MoveBaseGoal goal, int
                 logger.log("The goal received a cancel request before it started executing and was successfully cancelled");
                 logger.log("--------------");
                 break;
-            
-        }
-        log_amclpose();
-        if (max_retry > 0)
-        {
-            logger.log("Retrying...");
-            logger.log("Remaining retry count: " + std::to_string(max_retry));
-            logger.log("--------------");
-            start_navigation(ac, goal, --max_retry);
-        }
-        else
-        {
-            logger.log("The current goal may be unreachable, skipping the current goal");
-            logger.log("--------------");
+            }
+            log_amclpose();
+            sub.shutdown();
+            if (max_retry > 0)
+            {
+                logger.log("Retrying...");
+                logger.log("Remaining retry count: " + std::to_string(max_retry));
+                logger.log("--------------");
+                start_navigation(ac, goal, --max_retry);
+            }
+            else
+            {
+                logger.log("The current goal may be unreachable, skipping the current goal");
+                logger.log("--------------");
+            }
+                            
+                break;
         }
     }
 }
 
-// Callback function for handling incoming messages
-void recoveryStatusCallback(const move_base_msgs::RecoveryStatus::ConstPtr& msg) {
-    // Check if the message has any statuses
-    // if (msg->status_list.size() > 0) {
-        // Loop through the statuses and log the message for each one
-        // for (const auto& status : msg->status_list) {
-            logger.log("|==============|");
-            logger.log("Recovery status received: ");
-            logger.log("current_recovery_number: " + std::to_string(msg->current_recovery_number));
-            logger.log("total_number_of_recoveries: " + std::to_string(msg->total_number_of_recoveries));
-            logger.log("recovery_behavior_name: " + msg->recovery_behavior_name);
-            logger.log("|==============|");
-        // }
-    // }
+
+
+void resultCallback(const geometry_msgs::PoseWithCovarianceStamped::ConstPtr &msg)
+{
+    logger.log("result callback triggered");
 }
 
 // void stop_recording(FILE *ssrProcess)
@@ -412,86 +443,111 @@ void stop_recording()
 }
 
 // Signal handler function
-void signalHandler(int signum) {
-  std::cout << "Received signal " << signum << std::endl;
-  // Perform any cleanup or shutdown actions here
-  stop_recording();
-  exit(signum);
+void signalHandler(int signum)
+{
+    std::cout << "Received signal " << signum << std::endl;
+    // Perform any cleanup or shutdown actions here
+    stop_recording();
+    exit(signum);
 }
 
-int main(int argc, char** argv){
-        logger.log("Hello, world!");
+int main(int argc, char **argv)
+{
+    logger.log("Hello, world!");
 
     signal(SIGINT, signalHandler);
 
-	// 圈数
-	int laps = 1;
+    // 圈数
+    int laps = 1;
 
     // Connect to ROS
     ros::init(argc, argv, "simple_navigation_goals");
     // tell the action client that we want to spin a thread by default
     MoveBaseClient ac("move_base", true);
     // Wait for the action server to come up so that we can begin processing goals.
-    while(!ac.waitForServer(ros::Duration(5.0))){
-      ROS_INFO("Waiting for the move_base action server to come up");
+    while (!ac.waitForServer(ros::Duration(5.0)))
+    {
+        ROS_INFO("Waiting for the move_base action server to come up");
     }
-
 
     // Get the list of running ROS nodes
     std::vector<std::string> nodes;
-    if (ros::master::getNodes(nodes)) {
-        for (const auto& node : nodes) {
+    if (ros::master::getNodes(nodes))
+    {
+        for (const auto &node : nodes)
+        {
             logger.log("Found node: " + std::string(node));
         }
-    } else {
+    }
+    else
+    {
         ROS_ERROR("Failed to get list of running nodes.");
     }
 
     logger.log("==============");
 
+    // Get the private namespace for move_base
+ros::NodeHandle nh_priv("~move_base");
+
+// Get all the parameters for move_base
+XmlRpc::XmlRpcValue params;
+if (nh_priv.getParam("", params))
+{
+  ROS_INFO("Successfully retrieved move_base parameters");
+  ROS_INFO_STREAM("Parameters: " << params);
+}
+else
+{
+  ROS_WARN("Failed to retrieve move_base parameters");
+}
+
     // 在 visualization_marker 上广播
     ros::NodeHandle n;
     marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 
-        // Subscribe to the move_base/recovery_status topic
-    ros::Subscriber sub = n.subscribe<move_base_msgs::RecoveryStatus>(
-        "/move_base/recovery_status", 1, recoveryStatusCallback);
-    
+    // Subscribe to the move_base/recovery_status topic
+    // ros::Subscriber sub = n.subscribe<move_base_msgs::RecoveryStatus>("/move_base/recovery_status", 1, recoveryStatusCallback);
 
-    cout << "\nPlease choose one point on map to start navigation."<<endl;
+    // ros::Subscriber sub_ = n.subscribe("/amcl_pose", 1, resultCallback);
+
+    cout << "\nPlease choose one point on map to start navigation." << endl;
 
     std::list<ptr_PointStamped> points_list = record_points();
 
-    // Start recording
-    // FILE* ssrProcess = popen("simplescreenrecorder --start-recording --start-hidden", "w");
+    // while (ros::ok())
+    // {
+    //     ros::spinOnce();
 
-    if (points_list.size() != 0)
-    {
-        // 超过一个标记点：设置终点为第一个标记点
-        if (points_list.size() != 1)
-            points_list.push_back(points_list.front());
-
-        auto prev_iter = points_list.begin();
-        auto it = points_list.begin();
-        while (it != points_list.end())
+        if (points_list.size() != 0)
         {
+            // 超过一个标记点：设置终点为第一个标记点
+            if (points_list.size() != 1)
+                points_list.push_back(points_list.front());
 
-            ROS_INFO("%d laps left", laps);
+            auto prev_iter = points_list.begin();
+            auto it = points_list.begin();
+            while (it != points_list.end())
+            {
 
-            move_base_msgs::MoveBaseGoal goal = point_to_goal(points_list, it, prev_iter, laps);
+                ROS_INFO("%d laps left", laps);
 
-            cout << "\nGoing to next point." << endl;
+                move_base_msgs::MoveBaseGoal goal = point_to_goal(points_list, it, prev_iter, laps);
 
-            start_navigation(ac, goal, 3);
+                cout << "\nGoing to next point." << endl;
+
+                start_navigation(ac, goal, 3);
+            }
         }
-    }
 
-    cout <<"\n should stop recording" << endl;
+        // ros::Duration(0.1).sleep();
+    // }
+
+    cout << "\n should stop recording" << endl;
 
     // stop_recording(ssrProcess);
     stop_recording();
 
-    ros::spin();
+    // ros::spin();
 
-  return 0;
+    return 0;
 }
