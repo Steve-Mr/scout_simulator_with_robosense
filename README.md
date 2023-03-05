@@ -25,4 +25,9 @@ roslaunch navigation move_base.launch
 
 # launch simple tool for mark multiple points and navigation
 rosrun navigation loop_goals_time
+
+# launch simple tool for mark multiple points and navigation with logs and screen recordings
+rosrun navigation loop_goals_time_alt
 ```
+
+If you need to run loop_goals_time_alt, then you need to install simplescreenrecorder >=0.4.4
