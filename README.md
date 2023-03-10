@@ -13,13 +13,16 @@ catkin_make
 
 ## launch
 
+unused launch command:
 ```sh
 # launch scout v2 robot with rs-16 lidar in gazebo
 roslaunch scout_gazebo_sim scout_empty_world.launch
 
 # launch pointcloud_to_laserscan
 roslaunch pointcloud_to_laserscan point_to_scan.launch
-
+```
+now launch navigation only need move_base.launch:
+```sh
 # launch navigation related nodes
 roslaunch navigation move_base.launch
 

@@ -1,5 +1,9 @@
 <launch>
 
+<include file="$(find scout_gazebo_sim)/launch/scout_empty_world.launch"/>
+<include file="$(find pointcloud_to_laserscan)/launch/point_to_scan.launch"/>
+
+
   <!-- Transformation Configuration ... Setting Up the Relationships Between Coordinate Frames -->
   <node pkg="tf" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map 50"/>
   <!-- <node pkg="tf" type="static_transform_publisher" name="baselink_to_world" args="0 0 0 0 0 0 base_link world 50"/> -->
@@ -7,7 +11,7 @@
   <!-- <node pkg="tf" type="static_transform_publisher" name="rslidar_to_baselink" args="0 0 0 0 0 0 rslidar base_link 50"/> -->
 
   <!-- Map File -->
-  <arg name="map_file" default="$(find navigation)/map/test.yaml"/>
+  <arg name="map_file" default="$(find navigation)/map/map_1.yaml"/>
 	
   <!-- Map Server -->
   <!-- Publish: /map, /map_metadata -->
@@ -37,7 +41,7 @@
   </node>
 
     <!-- rviz -->
-  <node pkg="rviz" name="rviz" type="rviz" args="-d $(find navigation)/rviz/mobile_manipulator.rviz" />
+  <node pkg="rviz" name="rviz" type="rviz" args="-d $(find navigation)/rviz/mobile_manipulator_alt.rviz" />
 	
   <!-- Move Base Node -->
   <!-- Subscribe: /tf, /map, /scan, /odom, /move_base_simple/goal -->
