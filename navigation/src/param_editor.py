@@ -4,6 +4,8 @@ from rospkg import RosPack as rp
 import pathlib
 import yaml
 import subprocess
+import filecmp
+import difflib
 
 
 param_dirs = ["config", "param", "params", "launch"]
@@ -143,20 +145,21 @@ def process_yaml(file_path):
         
         
 def process_file(file_path):
-    # subprocess.run(['nano', file_path])
-    with open(file_path, 'w+') as f:
-    
-        subprocess.call(['nano', file_path])
+    with open(file_path, 'r') as f:
+        content_before = f.readlines()
 
-        # get the edited content
-        f.seek(0)
-        content = f.read()
+    # 调用 nano 编辑文件
+    subprocess.call(['nano', file_path])
 
-        # find the line that was edited
-        lines = content.split('\n')
-        for i, line in enumerate(lines):
-            if 'edited' in line:
-                print(f'The user edited line {i+1}: {line}')
+    # 读取修改后的文件内容
+    with open(file_path, 'r') as f:
+        content_after = f.readlines()
+
+    for line in difflib.unified_diff(
+        content_before, content_after, fromfile=file_path,
+        tofile=file_path, lineterm=''):
+        print(line)
+
 
 if __name__ == '__main__':
     ws_path = get_workspace()
