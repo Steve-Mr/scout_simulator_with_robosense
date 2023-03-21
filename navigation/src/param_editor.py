@@ -1,11 +1,10 @@
-import rospkg
 import os
 from rospkg import RosPack as rp
 import pathlib
-import yaml
 import subprocess
-import filecmp
 import difflib
+from datetime import datetime
+import git
 
 
 param_dirs = ["config", "param", "params", "launch"]
@@ -66,8 +65,11 @@ def scan_dir(dirname):
 def choice(list, item_name):
     for i, item in enumerate(list):
         print(f'{i}: {item}')
-    choice = int(input("\nChoose {} by number: ".format(item_name)))
-    selected_item = list[choice]
+    while(1):
+        choice = int(input("\nChoose {} by number: ".format(item_name)))
+        if choice in range(len(list)):
+            selected_item = list[choice]
+            break
     return selected_item
 
 
@@ -131,19 +133,49 @@ def find_key(dict_obj, target_key):
     return None
 
 
-def process_yaml(file_path):
-    param_name = input("Input param name: ")
-    with open(file_path, 'r') as f:
-        data = yaml.safe_load(f)
-    value = find_key(data, param_name)
-    if value:
-        print('Value of {}:'.format(param_name), value)    
-    value = input("Enter value for '{}': ".format(param_name))
-    data[param_name] = value
-    with open(file_path, "w") as f:
-        yaml.safe_dump(data, f)
-        
-        
+def logger(ws_path, logger_name, content):
+    with open(os.path.join(ws_path, logger_name), 'a+') as f:
+        f.write(content)
+
+def auto_commit(ws_path):
+
+    repo = git.Repo(ws_path)
+
+    if repo.is_dirty():
+
+        # Get the list of changed files and use it as the commit message
+        changed_files = [item.a_path for item in repo.index.diff(None)]
+        commit_message = "\n".join(changed_files)
+
+        # Check if there are any changes in the submodules
+        for submodule in repo.submodules:
+
+            # Check if the submodule exists and is dirty
+            if submodule.module_exists() and submodule.module().is_dirty():
+
+                # Create a Git Repo object for the submodule
+                submodule_repo = git.Repo(submodule.abspath)
+
+                # Add all changes to the staging area
+
+                # get the list of modified files in the submodule
+                modified_files = [
+                    item.a_path for item in submodule_repo.index.diff(None)]
+                commit_message += "\n" + "\n".join(modified_files)
+
+                submodule_commit_message = f"Auto commit: {submodule.name}: {', '.join(modified_files)}"
+                submodule_repo.git.add(update=True)
+
+                submodule_repo.git.commit(m=submodule_commit_message)
+
+        repo.git.add(update=True)
+
+        # Commit the changes with the list of changed files as the commit message
+        repo.git.commit(m=commit_message)
+
+    print("Finished.")
+
+
 def process_file(file_path):
     with open(file_path, 'r') as f:
         content_before = f.readlines()
@@ -155,13 +187,14 @@ def process_file(file_path):
     with open(file_path, 'r') as f:
         content_after = f.readlines()
 
-    for line in difflib.unified_diff(
-        content_before, content_after, fromfile=file_path,
-        tofile=file_path, lineterm=''):
-        print(line)
+    return difflib.unified_diff(
+        content_before, content_after,
+        fromfile=file_path, tofile=file_path, n=0,
+        fromfiledate=datetime.now().strftime("%Y-%m-%d %H:%M:%S"), tofiledate=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 
 if __name__ == '__main__':
+    log_name = "changelog"
     ws_path = get_workspace()
     if (ws_path):
         print(ws_path)
@@ -169,5 +202,7 @@ if __name__ == '__main__':
     pkg_path = rp().get_path(selected_pkg)
     param_list = get_param_list(pkg_path)
     param_path = (str(pkg_path) + "/" + choice(param_list, "param"))
-    # process_yaml(param_path)
-    process_file(param_path)
+    for line in process_file(param_path):
+        logger(ws_path, log_name, line)
+    logger(ws_path, log_name, "\n\n")
+    auto_commit(ws_path)
