@@ -17,31 +17,46 @@ def main():
     client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
     client.wait_for_server()
 
-    # 从文件中按行读取点
+    # 打开文件并读取所有行
     filename = rospy.get_param("~filename")
-    with open(filename) as file:
-        for line in file:
-            fields = line.split()
-            if len(fields) != 7:
-                rospy.logwarn("Invalid goal format: {}".format(line))
-                continue
-            goal = MoveBaseGoal()
-            goal.target_pose.header.frame_id = "map"
-            goal.target_pose.pose.position.x = float(fields[0])
-            goal.target_pose.pose.position.y = float(fields[1])
-            goal.target_pose.pose.position.z = float(fields[2])
-            goal.target_pose.pose.orientation.x = float(fields[3])
-            goal.target_pose.pose.orientation.y = float(fields[4])
-            goal.target_pose.pose.orientation.z = float(fields[5])
-            goal.target_pose.pose.orientation.w = float(fields[6])
-            
-            print('current goal: ({}, {})'.format(fields[0], fields[1]))
+    with open(filename, "r") as file:
+        lines = file.readlines()
 
-            send_goal_and_wait(client, goal)
-            
-            print('goal reached.')
+    # 将每行按照在文件中的存储顺序进行编号后显示在屏幕上
+    for i, line in enumerate(lines):
+        print(f"{i+1}. {line.strip()}")
 
-            rospy.sleep(2)
+    # 获取用户输入并根据输入的编号将对应的行重新打包起来
+    input_str = input("请输入需要的编号：")
+    selected_indices = [int(index.strip())-1 for index in input_str.replace('，', ',').split(",")]
+
+    selected_lines = [lines[i].strip() for i in selected_indices]
+    lines_str = "\n".join(selected_lines)
+    print(f"您选择的点有：\n{lines_str}")
+
+    # 根据重新组合后的行进行导航
+    for line in selected_lines:
+        fields = line.split()
+        if len(fields) != 7:
+            rospy.logwarn("Invalid goal format: {}".format(line))
+            continue
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.pose.position.x = float(fields[0])
+        goal.target_pose.pose.position.y = float(fields[1])
+        goal.target_pose.pose.position.z = float(fields[2])
+        goal.target_pose.pose.orientation.x = float(fields[3])
+        goal.target_pose.pose.orientation.y = float(fields[4])
+        goal.target_pose.pose.orientation.z = float(fields[5])
+        goal.target_pose.pose.orientation.w = float(fields[6])
+            
+        print('current goal: ({}, {})'.format(fields[0], fields[1]))
+
+        send_goal_and_wait(client, goal)
+            
+        print('goal reached.')
+
+        rospy.sleep(2)
 
 if __name__ == '__main__':
     main()
