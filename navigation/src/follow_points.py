@@ -3,11 +3,24 @@
 import rospy
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from geometry_msgs.msg import PoseWithCovarianceStamped
 
 def send_goal_and_wait(client, goal):
     """Send a goal and wait for the result."""
     client.send_goal(goal)
     client.wait_for_result()
+    
+def amcl_pose_callback(msg):
+    # 处理接收到的 amcl_pose 信息
+    pose = msg.pose.pose
+    position = pose.position
+    orientation = pose.orientation
+
+    # 输出位置和姿态信息
+    print("AMCL Pose - Position: [x: %f, y: %f, z: %f], Orientation: [x: %f, y: %f, z: %f, w: %f]",
+                  position.x, position.y, position.z,
+                  orientation.x, orientation.y, orientation.z, orientation.w)
+
 
 def main():
     # 初始化 ros 节点
@@ -35,7 +48,19 @@ def main():
     print(f"您选择的点有：\n{lines_str}")
 
     # 根据重新组合后的行进行导航
-    for line in selected_lines:
+    for goalindex, line in enumerate(selected_lines):
+        print("\nnew line start: ")
+        print(line)
+        print("current position: ")
+        msg = rospy.wait_for_message('amcl_pose', PoseWithCovarianceStamped)  
+        pose = msg.pose.pose
+        position = pose.position
+        orientation = pose.orientation
+
+        # 输出位置和姿态信息
+        print("AMCL Pose - Position: [x: %f, y: %f, z: %f], Orientation: [x: %f, y: %f, z: %f, w: %f]",
+                  position.x, position.y, position.z,
+                  orientation.x, orientation.y, orientation.z, orientation.w)      
         fields = line.split()
         if len(fields) != 7:
             rospy.logwarn("Invalid goal format: {}".format(line))
@@ -52,9 +77,12 @@ def main():
             
         print('current goal: ({}, {})'.format(fields[0], fields[1]))
 
-        send_goal_and_wait(client, goal)
-            
-        print('goal reached.')
+        send_goal_and_wait(client, goal)        
+        status = client.get_state()
+        if status == actionlib.GoalStatus.SUCCEEDED:
+            print('point index ' + str(selected_indices[goalindex]+1) + ' goal reached')
+        else:
+            print('point index ' + str(selected_indices[goalindex]+1) + ' goal not reatched')
 
         rospy.sleep(2)
 
