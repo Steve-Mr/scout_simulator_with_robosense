@@ -14,3 +14,7 @@
 [submodule "gazebo_ros_2Dmap_plugin"]
 	path = gazebo_ros_2Dmap_plugin
 	url = https://github.com/marinaKollmitz/gazebo_ros_2Dmap_plugin.git
+[submodule "rf2o_laser_odometry"]
+	path = rf2o_laser_odometry
+	url = https://github.com/MAPIRlab/rf2o_laser_odometry.git
+	branch = ros1

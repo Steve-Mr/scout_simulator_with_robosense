@@ -1,0 +1,32 @@
+--- /home/maary/slam/scout_ws/src/navigation/param/costmap_common_params.yaml
++++ /home/maary/slam/scout_ws/src/navigation/param/costmap_common_params.yaml
+@@ -57 +57 @@
+-  inflation_radius: 2.0
++  inflation_radius: 1.0
+--- /home/maary/slam/scout_ws/src/navigation/launch/amcl.launch	2023-03-21 16:48:33.871241
++++ /home/maary/slam/scout_ws/src/navigation/launch/amcl.launch	2023-03-21 16:48:33.871260
+@@ -34 +34 @@
+-  <param name="base_frame_id" value="base_link"/>
++  <param name="base_frame_id" value="base_footprint"/>
+--- /home/maary/slam/scout_ws/src/navigation/launch/move_base.launch	2023-03-21 16:50:39
++++ /home/maary/slam/scout_ws/src/navigation/launch/move_base.launch	2023-03-21 16:50:39
+@@ -29 +29 @@
+-  <!-- <remap from="/odom" to="/base_truth_odom" /> -->
++  
+--- /home/maary/slam/scout_ws/src/navigation/launch/base_gazebo_control.launch	2023-03-21 16:52:31
++++ /home/maary/slam/scout_ws/src/navigation/launch/base_gazebo_control.launch	2023-03-21 16:52:31
+@@ -16 +16 @@
+-  <!-- <rosparam command="load" file="$(find mobile_manipulator_body)/config/joint_state_controller.yaml" />
++  <!-- ! <rosparam command="load" file="$(find mobile_manipulator_body)/config/joint_state_controller.yaml" />
+
+
+--- /home/maary/slam/scout_ws/src/navigation/param/global_costmap_params.yaml	2023-03-21 16:53:11
++++ /home/maary/slam/scout_ws/src/navigation/param/global_costmap_params.yaml	2023-03-21 16:53:11
+@@ -2 +2 @@
+-width: 75
++width: 80
+@@ -5 +5 @@
+-height: 75
++height: 80
+
+

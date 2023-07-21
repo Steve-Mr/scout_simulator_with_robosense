@@ -1,0 +1,16 @@
+GlobalPlanner:
+
+  # 代价值计算公式: COST_NEUTRAL + COST_FACTOR * costmap_cost_value.
+  # costmap 的值在 0 到 252 之间
+  # 当 NEUTRAL_COST 值为 50（默认值）
+  # COST_FACTOR 需要在大约 0.8 来保证输出值在 50 到 253 均匀分布
+  cost_factor: 0.8
+
+NavfnROS:
+
+  # 代价值计算公式: COST_NEUTRAL + COST_FACTOR * costmap_cost_value.
+  # costmap 的值在 0 到 252 之间
+  # 当 NEUTRAL_COST 值为 50（默认值）
+  # COST_FACTOR 需要在大约 0.8 来保证输出值在 50 到 253 均匀分布
+  cost_factor: 0.8
+
