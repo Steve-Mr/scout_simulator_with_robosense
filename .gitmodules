@@ -18,3 +18,6 @@
 	path = rf2o_laser_odometry
 	url = https://github.com/MAPIRlab/rf2o_laser_odometry.git
 	branch = ros1
+[submodule "map2gazebo"]
+	path = map2gazebo
+	url = https://github.com/shilohc/map2gazebo.git
