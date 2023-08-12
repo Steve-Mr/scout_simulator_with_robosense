@@ -11,7 +11,7 @@
   <!-- <node pkg="tf" type="static_transform_publisher" name="rslidar_to_baselink" args="0 0 0 0 0 0 rslidar base_link 50"/> -->
 
   <!-- Map File -->
-  <arg name="map_file" default="$(find navigation)/map/map_1.yaml"/>
+  <arg name="map_file" default="$(find navigation)/map/corridor_karto.yaml"/>
 	
   <!-- Map Server -->
   <!-- Publish: /map, /map_metadata -->

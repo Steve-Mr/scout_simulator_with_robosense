@@ -1,8 +1,8 @@
 # Width of the map in meters
-width: 75
+width: 100
 
 # Height of the map in meters
-height: 75
+height: 100
 global_costmap: 
   global_frame: map
   static_map: true
