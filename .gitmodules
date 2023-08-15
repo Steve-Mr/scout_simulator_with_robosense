@@ -27,3 +27,6 @@
 [submodule "slam_karto"]
 	path = slam_karto
 	url = https://github.com/ros-perception/slam_karto.git
+[submodule "realsense_ros_gazebo"]
+	path = realsense_ros_gazebo
+	url = https://github.com/nilseuropa/realsense_ros_gazebo.git
