@@ -16,17 +16,17 @@
 	url = https://github.com/marinaKollmitz/gazebo_ros_2Dmap_plugin.git
 [submodule "rf2o_laser_odometry"]
 	path = rf2o_laser_odometry
-	url = https://github.com/MAPIRlab/rf2o_laser_odometry.git
+	url = https://github.com/Steve-Mr/rf2o_laser_odometry.git
 	branch = ros1
 [submodule "map2gazebo"]
 	path = map2gazebo
-	url = https://github.com/simchanu29/map2gazebo.git
+	url = https://github.com/Steve-Mr/map2gazebo.git
 [submodule "hector_slam"]
 	path = hector_slam
-	url = https://github.com/tu-darmstadt-ros-pkg/hector_slam.git
+	url = https://github.com/Steve-Mr/hector_slam.git
 [submodule "slam_karto"]
 	path = slam_karto
-	url = https://github.com/ros-perception/slam_karto.git
+	url = https://github.com/Steve-Mr/slam_karto.git
 [submodule "realsense_ros_gazebo"]
 	path = realsense_ros_gazebo
-	url = https://github.com/nilseuropa/realsense_ros_gazebo.git
+	url = https://github.com/Steve-Mr/realsense_ros_gazebo.git
