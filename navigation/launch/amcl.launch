@@ -3,6 +3,10 @@
   <!-- Publish scans from best pose at a max of 10 Hz -->
   <param name="odom_model_type" value="diff"/>
 
+  <param name="initial_pose_x" value="6.0"/>
+  <param name="initial_pose_y" value="5.0"/>
+  <param name="initial_pose_a" value="56.0"/>
+
   <param name="odom_alpha5" value="0.1"/>
   <param name="transform_tolerance" value="0.2" />
   <param name="gui_publish_rate" value="10.0"/>
