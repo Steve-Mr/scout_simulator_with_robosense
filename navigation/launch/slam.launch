@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+  <include file="$(find pointcloud_to_laserscan)/launch/point_to_scan.launch" />
+
+  <include file="$(find hector_slam_launch)/launch/tutorial.launch" />
+
+</launch>

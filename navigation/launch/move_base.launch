@@ -1,7 +1,7 @@
 <launch>
 
 <include file="$(find scout_gazebo_sim)/launch/scout_empty_world.launch"/>
-<include file="$(find pointcloud_to_laserscan)/launch/point_to_scan.launch"/>
+<include file="$(find navigation)/launch/point_to_scan.launch"/>
 
 
   <!-- Transformation Configuration ... Setting Up the Relationships Between Coordinate Frames -->
@@ -11,7 +11,7 @@
   <!-- <node pkg="tf" type="static_transform_publisher" name="rslidar_to_baselink" args="0 0 0 0 0 0 rslidar base_link 50"/> -->
 
   <!-- Map File -->
-  <arg name="map_file" default="$(find navigation)/map/corridor_karto.yaml"/>
+  <arg name="map_file" default="$(find navigation)/map/test.yaml"/>
 	
   <!-- Map Server -->
   <!-- Publish: /map, /map_metadata -->
