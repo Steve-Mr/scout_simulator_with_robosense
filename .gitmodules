@@ -17,12 +17,6 @@
 [submodule "map2gazebo"]
 	path = map2gazebo
 	url = https://github.com/Steve-Mr/map2gazebo.git
-[submodule "hector_slam"]
-	path = hector_slam
-	url = https://github.com/Steve-Mr/hector_slam.git
-[submodule "slam_karto"]
-	path = slam_karto
-	url = https://github.com/Steve-Mr/slam_karto.git
 [submodule "realsense_ros_gazebo"]
 	path = realsense_ros_gazebo
 	url = https://github.com/Steve-Mr/realsense_ros_gazebo.git

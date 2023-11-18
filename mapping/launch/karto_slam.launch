@@ -1,0 +1,18 @@
+<!--
+Provides a reasonable set of parameters for running Karto on a robot
+Assumes an 'odom_combined' frame, that provides reasonably accurate odometry
+-->
+
+<launch>
+  <include file="$(find scout_gazebo_sim)/launch/scout_empty_world.launch"/>
+  <include file="$(find navigation)/launch/point_to_scan.launch"/>
+  <include file="$(find navigation)/launch/continuous_detection.launch" />
+  <node pkg="slam_karto" type="slam_karto" name="slam_karto" output="screen">
+    <remap from="scan" to="scan"/>
+    <param name="odom_frame" value="odom"/>
+    <param name="map_update_interval" value="25"/>
+    <param name="resolution" value="0.05"/>
+  </node>
+  <node pkg="rviz" name="rviz" type="rviz" args="-d $(find navigation)/rviz/mobile_manipulator_alt.rviz" />
+
+</launch>
