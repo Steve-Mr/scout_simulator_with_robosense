@@ -1,0 +1,63 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/maary/slam/scout_ws/devel/include/**",
+        "/home/maary/interbotix_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/maary/interbotix_ws/src/ar_track_alvar/ar_track_alvar/include/**",
+        "/home/maary/interbotix_ws/src/create_robot/create_driver/include/**",
+        "/home/maary/interbotix_ws/src/interbotix_ros_core/interbotix_ros_xseries/dynamixel_workbench_toolbox/include/**",
+        "/home/maary/slam/scout_ws/src/ugv_sim/ranger/four_wheel_steering_controller/include/**",
+        "/home/maary/slam/scout_ws/src/gazebo_ros_2Dmap_plugin/include/**",
+        "/home/maary/interbotix_ws/src/interbotix_ros_toolboxes/interbotix_common_toolbox/interbotix_moveit_interface/include/**",
+        "/home/maary/interbotix_ws/src/interbotix_ros_toolboxes/interbotix_common_toolbox/interbotix_tf_tools/include/**",
+        "/home/maary/interbotix_ws/src/interbotix_ros_toolboxes/interbotix_xs_toolbox/interbotix_xs_ros_control/include/**",
+        "/home/maary/interbotix_ws/src/interbotix_ros_toolboxes/interbotix_xs_toolbox/interbotix_xs_rviz/include/**",
+        "/home/maary/interbotix_ws/src/interbotix_ros_core/interbotix_ros_xseries/interbotix_xs_sdk/include/**",
+        "/home/maary/interbotix_ws/src/interbotix_ros_manipulators/interbotix_ros_xsarms/examples/interbotix_xsarm_pid/include/**",
+        "/home/maary/interbotix_ws/src/kobuki/kobuki_auto_docking/include/**",
+        "/home/maary/interbotix_ws/src/kobuki/kobuki_bumper2pc/include/**",
+        "/home/maary/interbotix_ws/src/kobuki/kobuki_controller_tutorial/include/**",
+        "/home/maary/interbotix_ws/src/kobuki/kobuki_keyop/include/**",
+        "/home/maary/interbotix_ws/src/kobuki/kobuki_node/include/**",
+        "/home/maary/interbotix_ws/src/kobuki/kobuki_random_walker/include/**",
+        "/home/maary/interbotix_ws/src/kobuki/kobuki_safety_controller/include/**",
+        "/home/maary/slam/scout_ws/src/ugv_sim/limo/limo_gazebo_sim/include/**",
+        "/home/maary/slam/scout_ws/src/realsense_ros_gazebo/include/**",
+        "/home/maary/slam/scout_ws/src/rf2o_laser_odometry/include/**",
+        "/home/maary/slam/scout_ws/src/robosense_simulator/robosense_gazebo_plugins/include/**",
+        "/home/maary/slam/scout_ws/src/ugv_sim/scout/scout_gazebo_sim/include/**",
+        "/home/maary/slam/scout_ws/src/ugv_sim/hunter/steer_bot_hardware_gazebo/include/**",
+        "/home/maary/slam/scout_ws/src/ugv_sim/hunter/steer_drive_controller/include/**",
+        "/home/maary/slam/scout_ws/src/ugv_sim/tracer/tracer_gazebo_sim/include/**",
+        "/home/maary/slam/scout_ws/src/ugv_sim/ranger/urdf_geometry_parser/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_ar_marker_tracking/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_ar_pair_tracking/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_cmd_vel_mux/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_controllers/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_diff_drive_pose_controller/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_keyop/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_math_toolkit/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_navi_toolkit/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_navigator/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_safety_controller/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_velocity_smoother/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_virtual_sensor/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_waypoint_provider/include/**",
+        "/home/maary/interbotix_ws/src/yujin_ocs/yocs_waypoints_navi/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

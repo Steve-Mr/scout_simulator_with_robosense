@@ -1,0 +1,8 @@
+<launch>
+  <param name="/use_sim_time" value="true" />
+  <node name="playbag" pkg="rosbag" type="play"
+      args="--clock -r 100 $(arg bag_filename)" />
+  <!-- <node pkg="map_server" type="map_saver" name="map_saver" args="-f $(find navigation)/map_1"
+  output="screen" if="$(eval ros_condition 'CompletedProcess(rosbag_play, "succeeded")')"/> -->
+  <!-- <node name="map_saver1" pkg="map_server" type="map_saver" args="-f $(find navigation)/map_1"/> -->
+</launch>

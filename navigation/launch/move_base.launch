@@ -7,11 +7,11 @@
   <!-- Transformation Configuration ... Setting Up the Relationships Between Coordinate Frames -->
   <!-- <node pkg="tf" type="static_transform_publisher" name="world_to_map" args="0 0 0 0 0 0 world map 50"/> -->
   <!-- <node pkg="tf" type="static_transform_publisher" name="baselink_to_world" args="0 0 0 0 0 0 base_link world 50"/> -->
-  <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_broadcaster" args="0 0 0.05 0 0 0 base_footprint base_link 50" /> -->
+  <!-- <node pkg="tf" type="static_transform_publisher" name="base_link_broadcaster" args="0 0 0.10 0 0 0 base_footprint base_link 50" /> -->
   <!-- <node pkg="tf" type="static_transform_publisher" name="rslidar_to_baselink" args="0 0 0 0 0 0 rslidar base_link 50"/> -->
 
   <!-- Map File -->
-  <arg name="map_file" default="$(find navigation)/map/test.yaml"/>
+  <arg name="map_file" default="$(find navigation)/map/factory.yaml"/>
 	
   <!-- Map Server -->
   <!-- Publish: /map, /map_metadata -->
@@ -28,8 +28,9 @@
   <!-- Publish: /robot_pose_ekf/odom_combined -->
   <!-- <remap from="/odom" to="/base_truth_odom" /> -->
   <!-- <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
-    <param name="output_frame" value="odom"/>
-    <param name="base_footprint_frame" value="base_link"/>
+    <remap from="/robot_pose_ekf/odom_combined" to="/odom_combined" />
+    <param name="output_frame" value="odom_combined"/>
+    <param name="base_footprint_frame" value="base_footprint"/>
     <param name="freq" value="50.0"/>
     <param name="sensor_timeout" value="1.0"/>
     <param name="odom_used" value="true"/>
@@ -48,6 +49,7 @@
   <!-- Publish: /cmd_vel -->
   <!-- <remap from="cmd_vel" to="/robot_base_velocity_controller/cmd_vel"/> -->
   <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+    <!-- <remap from="/odom" to="/odom_combined" /> -->
     <rosparam file="$(find navigation)/param/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find navigation)/param/costmap_common_params.yaml" command="load" ns="local_costmap" />
     <rosparam file="$(find navigation)/param/local_costmap_params.yaml" command="load" ns="local_costmap" />
